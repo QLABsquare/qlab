@@ -12,11 +12,11 @@ An excellent interactive tutorial is available here: [Try Git](https://try.githu
 If you do not already have a Github account, create one for free. Just go to <https://github.com>
 
 ## Fork repository
-Fork the public repository named "qlab" at: <https://github.com/Qlab-UDel/qlab>, just press the fork button (make sure you are currently logged into your own account).
+Fork the public repository named "qlab" at: <https://github.com/QLABsquare/qlab>, just press the fork button (make sure you are currently logged into your own account).
 
 As you fork this repo, this qlab repo will appear in your own github profile. 
 
-## Watch the upstream repository <https://github.com/Qlab-UDel/qlab>.
+## Watch the upstream repository <https://github.com/QLABsquare/qlab>.
 You will get email notification when there are changes on the repo.
 
 ## Setting up your local clone in local terminal (you only need to do this once for the 'qlab' repo)
@@ -32,7 +32,7 @@ Now you will have a local folder called qlab on the computer.
 Then type:
 ```
 cd ./qlab
-git remote add upstream https://github.com/Qlab-UDel/qlab.git
+git remote add upstream https://github.com/QLABsquare/qlab.git
 git remote -v
 git remote set-url --push upstream Oops.no.push.to.upstream
 ```
@@ -82,9 +82,9 @@ See here for how to write a commit message: <https://chris.beams.io/posts/git-co
 git push origin branch_name
 ```
 
-6) In your forked repo on github, you will see an automatically generated message on the pull request page. Create pull request comparing Qlab-Udel/qlab master and YourGitHubAccount/qlab branch_name. 
+6) In your forked repo on github, you will see an automatically generated message on the pull request page. Create pull request comparing QLABsquare/qlab master and YourGitHubAccount/qlab branch_name. 
 
-7) Wait for Zhenghan to merge your changes to the qlab.Udel lab master. You will receive an email when this step is done.
+7) Wait for Zhenghan to merge your changes to the QLABsquare lab master. You will receive an email when this step is done.
 
 ### Note:
 1. If you have any questions, ask them on our git_github slack channel. Please send the history of your command (type history in the command window) as well as the error messages.
