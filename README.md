@@ -38,8 +38,8 @@ git remote set-url --push upstream Oops.no.push.to.upstream
 ```
 In the output you will see:
 ```
-origin https://github.com/zhenghanQ/qlab.git (fetch)
-origin https://github.com/zhenghanQ/qlab.git (push)
+origin https://github.com/YourGitHubAccount/qlab.git (fetch)
+origin https://github.com/YourGitHubAccount/qlab.git (push)
 upstream https://github.com/Qlab-UDel/qlab.git (fetch)
 upstream	Oops.no.push.to.upstream (push)
 ```
