@@ -40,7 +40,7 @@ In the output you will see:
 ```
 origin https://github.com/YourGitHubAccount/qlab.git (fetch)
 origin https://github.com/YourGitHubAccount/qlab.git (push)
-upstream https://github.com/Qlab-UDel/qlab.git (fetch)
+upstream https://github.com/QLABsquare/qlab.git (fetch)
 upstream	Oops.no.push.to.upstream (push)
 ```
 ## Doing your work in a branch in local clone (every time you start working on sth)
