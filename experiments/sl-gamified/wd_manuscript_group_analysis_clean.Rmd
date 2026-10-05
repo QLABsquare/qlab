@@ -1,0 +1,437 @@
+---
+title: "wd_manuscript_group_analysis.rmd"
+date: "2026-08-19"
+output: html_document
+---
+
+
+## Cohort 1 2AFC Analysis
+```{r}
+## Session 1 vs Session 2 trial-level accuracy: descriptives + GLMM
+
+library(dplyr)
+library(tidyr)
+library(lme4)
+library(emmeans)
+
+## 1. Read data
+data_path <- "cohort1_afc_by_trial.csv"
+
+df <- read.csv(data_path, stringsAsFactors = FALSE) %>%
+  dplyr::mutate(
+    id             = as.factor(as.character(id)),
+    session_number = as.factor(as.character(session_number)),
+    Trial.Number   = as.numeric(as.character(Trial.Number)),
+    score          = as.numeric(as.character(score))
+  )
+
+## 2. Descriptive counts-
+
+# IDs per session
+n_ids_per_session <- df %>%
+  dplyr::group_by(session_number) %>%
+  dplyr::summarise(n_ids = dplyr::n_distinct(id))
+
+# Trials per ID per session -> mean/SD/min/max per session
+trials_per_id_session <- df %>%
+  dplyr::group_by(id, session_number) %>%
+  dplyr::summarise(n_trials = dplyr::n())
+
+avg_trials_per_session <- trials_per_id_session %>%
+  dplyr::group_by(session_number) %>%
+  dplyr::summarise(
+    mean_trials = mean(n_trials),
+    sd_trials   = sd(n_trials),
+    min_trials  = min(n_trials),
+    max_trials  = max(n_trials)
+  )
+
+# IDs completing BOTH sessions
+ids_wide <- df %>%
+  dplyr::distinct(id, session_number) %>%
+  dplyr::mutate(present = 1) %>%
+  tidyr::pivot_wider(names_from = session_number, values_from = present,
+                      names_prefix = "session_", values_fill = 0)
+
+session_cols <- setdiff(names(ids_wide), "id")
+n_complete_both <- ids_wide %>%
+  dplyr::filter(dplyr::if_all(dplyr::all_of(session_cols), ~ .x == 1)) %>%
+  nrow()
+
+print(n_ids_per_session)
+print(avg_trials_per_session)
+cat("\nIDs with data in both sessions:", n_complete_both,
+    "/ total unique IDs:", dplyr::n_distinct(df$id), "\n")
+
+## 3. Subject-level accuracy -> mean of subject means, SD
+subject_accuracy <- df %>%
+  dplyr::group_by(id, session_number) %>%
+  dplyr::summarise(
+    n_trials  = dplyr::n(),
+    n_correct = sum(score, na.rm = TRUE),
+    accuracy  = n_correct / n_trials
+  )
+
+chance_level <- 0.5  # adjust if chance isn't 50%
+
+ttest_by_session <- subject_accuracy %>%
+  dplyr::group_by(session_number) %>%
+  dplyr::group_modify(~ broom::tidy(t.test(.x$accuracy, mu = chance_level)))
+
+print(ttest_by_session)
+
+group_accuracy <- subject_accuracy %>%
+  dplyr::group_by(session_number) %>%
+  dplyr::summarise(
+    n_ids         = dplyr::n(),
+    mean_accuracy = mean(accuracy),
+    sd_accuracy   = sd(accuracy)
+  )
+
+print(group_accuracy)
+
+## 4. GLMM: trial-level accuracy ~ session-
+#  (1 + session_number | id) did not fit singular warning
+m_2afc_cohort1 <- glmer(
+  score ~ session_number + (1 | id),
+  data = df,
+  family = binomial(link = "logit"),
+  control = glmerControl(optimizer = "bobyqa")
+)
+
+print(summary(m_2afc_cohort1))
+
+or_ci <- exp(cbind(OR = fixef(m_2afc_cohort1),
+                    confint(m_2afc_cohort1, method = "Wald", parm = "beta_")))
+cat("Odds ratios (95% CI)"); print(or_ci)
+
+0.56 (0.09)
+0.55 (0.18)
+```
+
+
+
+## Cohort 2 2AFC Analysis
+```{r}
+## Session 1 vs Session 2 trial-level accuracy: descriptives + GLMM
+
+library(dplyr)
+library(tidyr)
+library(lme4)
+library(emmeans)
+
+## 1. Read data
+data_path <- "cohort2_afc_by_trial.csv"
+
+df <- read.csv(data_path, stringsAsFactors = FALSE) %>%
+  dplyr::mutate(
+    id             = as.factor(id),
+    session_number = as.factor(session_number),
+    Trial.Number   = as.numeric(Trial.Number),
+    score          = as.numeric(score)
+  )
+
+## 2. Descriptive counts-
+
+# IDs per session
+n_ids_per_session <- df %>%
+  dplyr::group_by(session_number) %>%
+  dplyr::summarise(n_ids = dplyr::n_distinct(id))
+
+# Trials per ID per session -> mean/SD/min/max per session
+trials_per_id_session <- df %>%
+  dplyr::group_by(id, session_number) %>%
+  dplyr::summarise(n_trials = dplyr::n())
+
+avg_trials_per_session <- trials_per_id_session %>%
+  dplyr::group_by(session_number) %>%
+  dplyr::summarise(
+    mean_trials = mean(n_trials),
+    sd_trials   = sd(n_trials),
+    min_trials  = min(n_trials),
+    max_trials  = max(n_trials)
+  )
+
+# IDs completing BOTH sessions
+ids_wide <- df %>%
+  dplyr::distinct(id, session_number) %>%
+  dplyr::mutate(present = 1) %>%
+  tidyr::pivot_wider(names_from = session_number, values_from = present,
+                      names_prefix = "session_", values_fill = 0)
+
+session_cols <- setdiff(names(ids_wide), "id")
+n_complete_both <- ids_wide %>%
+  dplyr::filter(dplyr::if_all(dplyr::all_of(session_cols), ~ .x == 1)) %>%
+  nrow()
+
+print(n_ids_per_session)
+print(avg_trials_per_session)
+cat("\nIDs with data in both sessions:", n_complete_both,
+    "/ total unique IDs:", dplyr::n_distinct(df$id), "\n")
+
+## 3. Subject-level accuracy -> mean of subject means, SD
+subject_accuracy <- df %>%
+  dplyr::group_by(id, session_number) %>%
+  dplyr::summarise(
+    n_trials  = dplyr::n(),
+    n_correct = sum(score, na.rm = TRUE),
+    accuracy  = n_correct / n_trials
+  )
+
+chance_level <- 0.5  # adjust if chance isn't 50%
+
+ttest_by_session <- subject_accuracy %>%
+  dplyr::group_by(session_number) %>%
+  dplyr::group_modify(~ broom::tidy(t.test(.x$accuracy, mu = chance_level)))
+
+print(ttest_by_session)
+
+group_accuracy <- subject_accuracy %>%
+  dplyr::group_by(session_number) %>%
+  dplyr::summarise(
+    n_ids         = dplyr::n(),
+    mean_accuracy = mean(accuracy),
+    sd_accuracy   = sd(accuracy)
+  )
+
+print(group_accuracy)
+
+## 4. GLMM: trial-level accuracy ~ session-
+#  (1 + session_number | id) did not fit singular warning
+m_2afc_cohort2 <- glmer(
+  score ~ session_number + (1 | id),
+  data = df,
+  family = binomial(link = "logit"),
+  control = glmerControl(optimizer = "bobyqa")
+)
+
+print(summary(m_2afc_cohort2))
+
+or_ci <- exp(cbind(OR = fixef(m_2afc_cohort2),
+                    confint(m_2afc_cohort2, method = "Wald", parm = "beta_")))
+cat("Odds ratios (95% CI)"); print(or_ci)
+
+0.58 (0.13)
+0.62 (0.22)
+```
+
+
+
+
+
+
+## Cohort 1 SICR comparison
+```{r}
+## SICR: target sequence accuracy, session 1 vs 2, controlling
+## for foil accuracy (Cohort 2)
+
+library(dplyr)
+library(tidyr)
+library(lme4)
+library(emmeans)
+library(lmerTest)
+
+## 1. Read data
+sicr_path2 <- "cohort1_ssl_sicr_by_trial_s2.csv"
+
+sicr2 <- read.csv(sicr_path2, stringsAsFactors = FALSE) %>%
+  dplyr::mutate(
+    id              = as.factor(as.character(id)),
+    session_number  = as.factor(as.character(session_number)),
+    target_tag      = as.factor(as.character(target_tag))
+  )
+
+
+sicr <- sicr2
+
+## Trial count checks: target vs. foil trials per id x session --
+ 
+trial_counts <- sicr %>%
+  dplyr::group_by(id, session_number, target_tag) %>%
+  dplyr::summarise(n_trials = dplyr::n(), .groups = "drop")
+ 
+cat("Trial counts by id x session x target_tag (first rows)")
+print(head(trial_counts, 20))
+ 
+trial_counts_summary <- trial_counts %>%
+  dplyr::group_by(session_number, target_tag) %>%
+  dplyr::summarise(
+    n_ids       = dplyr::n(),
+    mean_trials = mean(n_trials),
+    sd_trials   = sd(n_trials),
+    min_trials  = min(n_trials),
+    max_trials  = max(n_trials),
+    .groups = "drop"
+  )
+ 
+cat("Trial count summary by session x target_tag (0 = foil, 1 = target)")
+print(trial_counts_summary)
+
+## Subject-level means, then mean of subject means, per measure,
+##      separately for target and foil sequences
+ 
+subject_means_by_tag <- sicr %>%
+  dplyr::group_by(id, session_number, target_tag) %>%
+  dplyr::summarise(
+    mean_correct_serial_syllables = mean(correct_serial_syllables, na.rm = TRUE),
+    mean_correct_bigrams          = mean(correct_bigrams, na.rm = TRUE)
+  )
+ 
+group_means_by_tag <- subject_means_by_tag %>%
+  dplyr::group_by(session_number, target_tag) %>%
+  dplyr::summarise(
+    n_ids                    = dplyr::n(),
+    mean_serial_syllables    = mean(mean_correct_serial_syllables),
+    sd_serial_syllables      = sd(mean_correct_serial_syllables),
+    mean_bigrams             = mean(mean_correct_bigrams),
+    sd_bigrams               = sd(mean_correct_bigrams)
+  )
+ 
+cat("Mean (SD) of subject means, by session x target_tag (0 = foil, 1 = target)")
+print(group_means_by_tag)
+
+write.csv(group_means_by_tag, "cohort1_sicr_mean.csv", row.names = F)
+
+## Models: all trials (target + foil), session x target_tag
+##      interaction, random intercept for id
+##      Interaction tests whether the session effect differs between
+##      target and foil trials, rather than assuming a constant shift.
+ 
+## Model 1: correct_serial_syllables ~ session * target_tag--
+ 
+m_serial <- lmerTest::lmer(
+  correct_serial_syllables ~ target_tag + (1 | id),
+  data = sicr
+)
+cat("LMM: correct_serial_syllables ~ session * target_tag")
+print(summary(m_serial))
+ 
+## Model 2: correct_bigrams ~ session * target_tag
+ 
+m_bigram <- lmerTest::lmer(
+  correct_bigrams ~ target_tag + (1 | id),
+  data = sicr
+)
+cat("LMM: correct_bigrams ~ session * target_tag")
+print(summary(m_bigram))
+```
+
+
+
+
+## Cohort 2 SICR comparison
+```{r}
+## SICR: target sequence accuracy, session 1 vs 2, controlling
+## for foil accuracy (Cohort 2)
+library(dplyr)
+library(tidyr)
+library(lme4)
+library(emmeans)
+library(lmerTest)
+
+## 1. Read data
+sicr_path1 <- "cohort2_ssl_sicr_by_trial_s1.csv"
+sicr_path2 <- "cohort2_ssl_sicr_by_trial_s2.csv"
+
+sicr1 <- read.csv(sicr_path1, stringsAsFactors = FALSE) %>%
+  dplyr::mutate(
+    id              = as.factor(as.character(id)),
+    session_number  = as.factor(as.character(session_number)),
+    target_tag      = as.factor(as.character(target_tag))
+  )
+
+sicr2 <- read.csv(sicr_path2, stringsAsFactors = FALSE) %>%
+  dplyr::mutate(
+    id              = as.factor(as.character(id)),
+    session_number  = as.factor(as.character(session_number)),
+    target_tag      = as.factor(as.character(target_tag))
+  )
+
+sicr <- dplyr::bind_rows(sicr1, sicr2)
+
+## Trial count checks: target vs. foil trials per id x session --
+ 
+trial_counts <- sicr %>%
+  dplyr::group_by(id, session_number, target_tag) %>%
+  dplyr::summarise(n_trials = dplyr::n(), .groups = "drop")
+ 
+cat("Trial counts by id x session x target_tag (first rows)")
+print(head(trial_counts, 20))
+ 
+trial_counts_summary <- trial_counts %>%
+  dplyr::group_by(session_number, target_tag) %>%
+  dplyr::summarise(
+    n_ids       = dplyr::n(),
+    mean_trials = mean(n_trials),
+    sd_trials   = sd(n_trials),
+    min_trials  = min(n_trials),
+    max_trials  = max(n_trials),
+    .groups = "drop"
+  )
+ 
+cat("Trial count summary by session x target_tag (0 = foil, 1 = target)")
+print(trial_counts_summary)
+
+## Subject-level means, then mean of subject means, per measure,
+##      separately for target and foil sequences
+ 
+subject_means_by_tag <- sicr %>%
+  dplyr::group_by(id, session_number, target_tag) %>%
+  dplyr::summarise(
+    mean_correct_serial_syllables = mean(correct_serial_syllables, na.rm = TRUE),
+    mean_correct_bigrams          = mean(correct_bigrams, na.rm = TRUE)
+  )
+ 
+group_means_by_tag <- subject_means_by_tag %>%
+  dplyr::group_by(session_number, target_tag) %>%
+  dplyr::summarise(
+    n_ids                    = dplyr::n(),
+    mean_serial_syllables    = mean(mean_correct_serial_syllables),
+    sd_serial_syllables      = sd(mean_correct_serial_syllables),
+    mean_bigrams             = mean(mean_correct_bigrams),
+    sd_bigrams               = sd(mean_correct_bigrams)
+  )
+ 
+cat("Mean (SD) of subject means, by session x target_tag (0 = foil, 1 = target)")
+print(group_means_by_tag)
+
+write.csv(group_means_by_tag, "cohort2_sicr_mean.csv", row.names = F)
+
+## Models: all trials (target + foil), session x target_tag
+##      interaction, random intercept for id
+##      Interaction tests whether the session effect differs between
+##      target and foil trials, rather than assuming a constant shift.
+ 
+## Model 1: correct_serial_syllables ~ session * target_tag--
+ 
+m_serial <- lmerTest::lmer(
+  correct_serial_syllables ~ session_number * target_tag + (1 + session_number | id),
+  data = sicr
+)
+cat("LMM: correct_serial_syllables ~ session * target_tag")
+print(summary(m_serial))
+ 
+## target_tag difference within each session
+emm_serial_tag <- emmeans(m_serial, ~ target_tag | session_number)
+cat("emmeans: target vs. foil (correct_serial_syllables), within each session")
+print(emm_serial_tag)
+print(pairs(emm_serial_tag))
+ 
+ 
+## Model 2: correct_bigrams ~ session * target_tag
+ 
+m_bigram <- lmerTest::lmer(
+  correct_bigrams ~ session_number * target_tag + (1 + session_number | id),
+  data = sicr
+)
+cat("LMM: correct_bigrams ~ session * target_tag")
+print(summary(m_bigram))
+ 
+## target_tag difference within each session
+emm_bigram_tag <- emmeans(m_bigram, ~ target_tag | session_number)
+cat(" emmeans: target vs. foil (correct_bigrams), within each session")
+print(emm_bigram_tag)
+print(pairs(emm_bigram_tag))
+```
+
+
