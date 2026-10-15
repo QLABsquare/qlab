@@ -25,3 +25,5 @@ Group-level data (input for Group-level analysis script):
 -   **cohort2_ssl_sicr_by_trial_s1.csv**: by-trial SICR scores for all Experiment 2 participants at timepoint 1
 -   **cohort2_ssl_sicr_by_trial_s2.csv**: by-trial SICR scores for all Experiment 2 participants at timepoint 1
 -   
+# Open task resources
+- Access the Gorilla-hosted task here: https://app.gorilla.sc/openmaterials/1351289
